@@ -13,16 +13,20 @@ import { proxy, useSnapshot } from "valtio"
 const state = proxy({
   current: null,
   items: {
-    glass: "#fff",
-    glasses: "#fff",
-    nosePads: "#fff",
+    glass: "#000000",
+    glasses: "#000000",
+    "Material.001": "#000000",
   },
 })
 
-function Glasses() {
+useGLTF.preload("glasses.glb")
+
+const Glasses = () => {
   const ref = useRef()
   const snap = useSnapshot(state)
   const { nodes, materials } = useGLTF("glasses.glb")
+  materials.glasses.name = "rim"
+  materials["Material.001"].name = "nose_pads"
 
   // Animate model
   useFrame((state) => {
@@ -41,19 +45,23 @@ function Glasses() {
     document.body.style.cursor = `url('data:image/svg+xml;base64,${btoa(
       hovered ? cursor : auto,
     )}'), auto`
-  }, [hovered])
+  }, [hovered, snap.items])
 
   // Using the GLTFJSX output here to wire in app-state and hook up events
   return (
     <group
       ref={ref}
       dispose={null}
-      onPointerOver={(e) => (e.stopPropagation(), set(e.object.material.name))}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        set(e.object.material.name)
+      }}
       onPointerOut={(e) => e.intersections.length === 0 && set(null)}
       onPointerMissed={() => (state.current = null)}
-      onPointerDown={(e) => (
-        e.stopPropagation(), (state.current = e.object.material.name)
-      )}
+      onPointerDown={(e) => {
+        e.stopPropagation()
+        state.current = e.object.material.name
+      }}
     >
       <mesh
         receiveShadow
@@ -67,14 +75,14 @@ function Glasses() {
         castShadow
         geometry={nodes.Circle001_2.geometry}
         material={materials.glass}
-        material-color={snap.items.glasses}
+        material-color={snap.items.glass}
       />
       <mesh
         receiveShadow
         castShadow
         geometry={nodes.Circle001_3.geometry}
         material={materials["Material.001"]}
-        material-color={snap.items.nosePads}
+        material-color={snap.items["Material.001"]}
       />
     </group>
   )
@@ -98,7 +106,7 @@ export default function App() {
   return (
     <>
       <>
-        <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 0, 4], fov: 50 }}>
+        <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 0, 10], fov: 50 }}>
           <ambientLight intensity={0.7} />
           <spotLight
             intensity={0.5}
